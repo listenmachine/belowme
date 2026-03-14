@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Underwing</title>
+  <title>Below Me</title>
   <style>
     body {
       font-family: Arial, sans-serif;
@@ -14,7 +14,7 @@
     }
 
     .wrap {
-      max-width: 900px;
+      max-width: 920px;
       margin: 0 auto;
       padding: 40px 20px 60px;
     }
@@ -27,7 +27,7 @@
     p.intro {
       font-size: 1.1rem;
       color: #555;
-      max-width: 700px;
+      max-width: 760px;
       line-height: 1.5;
     }
 
@@ -82,6 +82,11 @@
       background: #183d76;
     }
 
+    button:disabled {
+      background: #8aa3c9;
+      cursor: wait;
+    }
+
     .note {
       margin-top: 12px;
       color: #666;
@@ -95,7 +100,13 @@
     .route-title {
       font-size: 1.25rem;
       font-weight: bold;
+      margin-bottom: 10px;
+    }
+
+    .route-subtitle {
+      color: #666;
       margin-bottom: 18px;
+      line-height: 1.5;
     }
 
     .card {
@@ -111,6 +122,12 @@
       font-size: 0.9rem;
       color: #666;
       margin-bottom: 6px;
+    }
+
+    .meta {
+      font-size: 0.9rem;
+      color: #666;
+      margin-bottom: 8px;
     }
 
     .card h3 {
@@ -141,13 +158,26 @@
       margin-top: 8px;
       line-height: 1.5;
     }
+
+    .loading {
+      margin-top: 20px;
+      color: #444;
+      font-weight: bold;
+    }
+
+    .footer-note {
+      margin-top: 24px;
+      color: #777;
+      font-size: 0.9rem;
+      line-height: 1.5;
+    }
   </style>
 </head>
 <body>
   <div class="wrap">
-    <h1>Underwing</h1>
+    <h1>Below Me</h1>
     <p class="intro">
-      Enter an origin and destination airport and get a reading list of interesting places and features beneath the route, in the order you'd roughly pass over them.
+      Enter an origin and destination airport and get a rough reading list of interesting places beneath the journey, in the order you'd pass over them.
     </p>
 
     <div class="box">
@@ -163,172 +193,261 @@
         </div>
       </div>
 
-      <button onclick="generateRoute()">Generate articles</button>
+      <button id="generateButton" onclick="generateRoute()">Generate articles</button>
 
-      <div class="note">Demo version with a few built-in route pairs for now.</div>
+      <div class="note">Free browser-only version using rough route sampling and Wikipedia nearby articles.</div>
       <div class="small">
-        Try these routes:<br />
+        Try these airport pairs:<br />
         LHR → ATH<br />
         JFK → SFO<br />
-        FRA → ATH
+        FRA → ATH<br />
+        CDG → FCO<br />
+        LAX → SEA
       </div>
     </div>
 
+    <div id="loading" class="loading"></div>
     <div id="error" class="error"></div>
     <div id="results" class="results"></div>
   </div>
 
   <script>
-    const routes = {
-      "LHR-ATH": {
-        label: "London Heathrow to Athens",
-        articles: [
-          {
-            time: "00:40",
-            title: "English Channel",
-            summary: "The arm of the Atlantic that separates southern England from northern France, and one of the busiest shipping lanes in the world.",
-            url: "https://en.wikipedia.org/wiki/English_Channel"
-          },
-          {
-            time: "01:20",
-            title: "Paris",
-            summary: "The capital of France, shaped by Roman origins, medieval growth, monarchy, revolution, and nineteenth-century rebuilding.",
-            url: "https://en.wikipedia.org/wiki/Paris"
-          },
-          {
-            time: "02:15",
-            title: "Alps",
-            summary: "One of Europe's major mountain ranges, stretching across several countries and long treated as both barrier and thoroughfare.",
-            url: "https://en.wikipedia.org/wiki/Alps"
-          },
-          {
-            time: "03:35",
-            title: "Adriatic Sea",
-            summary: "The northernmost arm of the Mediterranean Sea, lying between the Italian Peninsula and the Balkans.",
-            url: "https://en.wikipedia.org/wiki/Adriatic_Sea"
-          },
-          {
-            time: "04:25",
-            title: "Aegean Sea",
-            summary: "An arm of the Mediterranean between Greece and Anatolia, full of islands and deeply bound up with classical history.",
-            url: "https://en.wikipedia.org/wiki/Aegean_Sea"
-          }
-        ]
-      },
-
-      "JFK-SFO": {
-        label: "New York JFK to San Francisco",
-        articles: [
-          {
-            time: "00:30",
-            title: "Catskill Mountains",
-            summary: "A mountain region of southeastern New York, long associated with forests, rivers, resorts, and American landscape painting.",
-            url: "https://en.wikipedia.org/wiki/Catskill_Mountains"
-          },
-          {
-            time: "01:15",
-            title: "Susquehanna River",
-            summary: "A major river of the eastern United States flowing through New York, Pennsylvania, and Maryland into the Chesapeake Bay.",
-            url: "https://en.wikipedia.org/wiki/Susquehanna_River"
-          },
-          {
-            time: "02:40",
-            title: "Chicago",
-            summary: "A city on Lake Michigan that grew into one of the major railway, industrial, architectural, and cultural centres of the United States.",
-            url: "https://en.wikipedia.org/wiki/Chicago"
-          },
-          {
-            time: "03:50",
-            title: "Mississippi River",
-            summary: "One of the world's great river systems, running through the centre of the United States and shaping trade, travel, and settlement.",
-            url: "https://en.wikipedia.org/wiki/Mississippi_River"
-          },
-          {
-            time: "05:20",
-            title: "Rocky Mountains",
-            summary: "A vast mountain system in western North America, extending from Canada into the American Southwest.",
-            url: "https://en.wikipedia.org/wiki/Rocky_Mountains"
-          }
-        ]
-      },
-
-      "FRA-ATH": {
-        label: "Frankfurt to Athens",
-        articles: [
-          {
-            time: "00:35",
-            title: "Rhine",
-            summary: "A major European river associated with trade, frontiers, industry, folklore, and a long contested political geography.",
-            url: "https://en.wikipedia.org/wiki/Rhine"
-          },
-          {
-            time: "01:05",
-            title: "Black Forest",
-            summary: "A wooded mountain region in south-western Germany, famous for dense forest, clockmaking traditions, and folklore.",
-            url: "https://en.wikipedia.org/wiki/Black_Forest"
-          },
-          {
-            time: "02:05",
-            title: "Alps",
-            summary: "One of Europe's major mountain ranges, crossing several countries and shaping climate, travel, and settlement.",
-            url: "https://en.wikipedia.org/wiki/Alps"
-          },
-          {
-            time: "03:20",
-            title: "Adriatic Sea",
-            summary: "The northernmost arm of the Mediterranean Sea, lying between the Italian Peninsula and the Balkans.",
-            url: "https://en.wikipedia.org/wiki/Adriatic_Sea"
-          },
-          {
-            time: "04:05",
-            title: "Aegean Sea",
-            summary: "An arm of the Mediterranean between Greece and Anatolia, full of islands and deeply bound up with classical history.",
-            url: "https://en.wikipedia.org/wiki/Aegean_Sea"
-          }
-        ]
-      }
+    const airports = {
+      "LHR": { name: "London Heathrow", lat: 51.4700, lon: -0.4543 },
+      "ATH": { name: "Athens", lat: 37.9364, lon: 23.9475 },
+      "JFK": { name: "New York JFK", lat: 40.6413, lon: -73.7781 },
+      "SFO": { name: "San Francisco", lat: 37.6213, lon: -122.3790 },
+      "FRA": { name: "Frankfurt", lat: 50.0379, lon: 8.5622 },
+      "CDG": { name: "Paris Charles de Gaulle", lat: 49.0097, lon: 2.5479 },
+      "FCO": { name: "Rome Fiumicino", lat: 41.8003, lon: 12.2389 },
+      "LAX": { name: "Los Angeles", lat: 33.9416, lon: -118.4085 },
+      "SEA": { name: "Seattle", lat: 47.4502, lon: -122.3088 },
+      "ORD": { name: "Chicago O'Hare", lat: 41.9742, lon: -87.9073 },
+      "BOS": { name: "Boston Logan", lat: 42.3656, lon: -71.0096 },
+      "DUB": { name: "Dublin", lat: 53.4213, lon: -6.2701 },
+      "BCN": { name: "Barcelona", lat: 41.2974, lon: 2.0833 },
+      "AMS": { name: "Amsterdam Schiphol", lat: 52.3105, lon: 4.7683 },
+      "MAD": { name: "Madrid", lat: 40.4983, lon: -3.5676 }
     };
 
-    function generateRoute() {
-      const origin = document.getElementById("origin").value.trim().toUpperCase();
-      const destination = document.getElementById("destination").value.trim().toUpperCase();
+    const bannedTitlePatterns = [
+      /List of/i,
+      /disambiguation/i,
+      /airport/i,
+      /railway station/i,
+      /metro station/i,
+      /electoral/i,
+      /district/i,
+      /municipality/i,
+      /arrondissement/i,
+      /school/i,
+      /university/i,
+      /football club/i,
+      /F\.C\./i,
+      /A\.F\.C\./i,
+      /Cemetery/i
+    ];
+
+    function lerp(a, b, t) {
+      return a + (b - a) * t;
+    }
+
+    function generateSamplePoints(start, end, samples = 12) {
+      const points = [];
+      for (let i = 1; i < samples; i++) {
+        const t = i / samples;
+        points.push({
+          lat: lerp(start.lat, end.lat, t),
+          lon: lerp(start.lon, end.lon, t),
+          progress: t
+        });
+      }
+      return points;
+    }
+
+    function formatProgress(progress) {
+      const percent = Math.round(progress * 100);
+      return `${percent}% of route`;
+    }
+
+    function passesTitleFilter(title) {
+      return !bannedTitlePatterns.some(pattern => pattern.test(title));
+    }
+
+    function scoreTitle(title) {
+      let score = 0;
+
+      const bonuses = [
+        /Sea$/i,
+        /Ocean$/i,
+        /Mountains$/i,
+        /Mountain$/i,
+        /River$/i,
+        /Lake$/i,
+        /Islands$/i,
+        /Island$/i,
+        /Channel$/i,
+        /Forest$/i,
+        /Desert$/i,
+        /Bay$/i,
+        /Gulf$/i,
+        /Alps$/i
+      ];
+
+      bonuses.forEach(pattern => {
+        if (pattern.test(title)) score += 3;
+      });
+
+      if (title.split(" ").length <= 3) score += 1;
+
+      return score;
+    }
+
+    async function fetchGeoSearch(lat, lon) {
+      const url = `https://en.wikipedia.org/w/api.php?action=query&list=geosearch&gscoord=${lat}|${lon}&gsradius=10000&gslimit=10&format=json&origin=*`;
+      const response = await fetch(url);
+      if (!response.ok) throw new Error("Failed to fetch nearby articles");
+      const data = await response.json();
+      return data?.query?.geosearch || [];
+    }
+
+    async function fetchSummary(title) {
+      const url = `https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(title)}`;
+      const response = await fetch(url);
+      if (!response.ok) return null;
+      const data = await response.json();
+      if (!data.extract) return null;
+
+      return {
+        title: data.title,
+        summary: data.extract,
+        url: data.content_urls?.desktop?.page || `https://en.wikipedia.org/wiki/${encodeURIComponent(title)}`
+      };
+    }
+
+    async function generateRoute() {
+      const originCode = document.getElementById("origin").value.trim().toUpperCase();
+      const destinationCode = document.getElementById("destination").value.trim().toUpperCase();
       const results = document.getElementById("results");
       const error = document.getElementById("error");
+      const loading = document.getElementById("loading");
+      const button = document.getElementById("generateButton");
 
       results.innerHTML = "";
       error.textContent = "";
+      loading.textContent = "";
 
-      if (!origin || !destination) {
+      if (!originCode || !destinationCode) {
         error.textContent = "Please enter both an origin and destination airport code.";
         return;
       }
 
-      const routeKey = `${origin}-${destination}`;
-      const route = routes[routeKey];
+      const origin = airports[originCode];
+      const destination = airports[destinationCode];
 
-      if (!route) {
-        error.textContent = "That route is not in this demo yet. Try LHR to ATH, JFK to SFO, or FRA to ATH.";
+      if (!origin || !destination) {
+        error.textContent = "One or both airport codes are not in this small built-in airport list yet.";
         return;
       }
 
-      const title = document.createElement("div");
-      title.className = "route-title";
-      title.textContent = route.label;
-      results.appendChild(title);
+      if (originCode === destinationCode) {
+        error.textContent = "Please enter two different airports.";
+        return;
+      }
 
-      route.articles.forEach(article => {
-        const card = document.createElement("div");
-        card.className = "card";
+      button.disabled = true;
+      loading.textContent = "Looking up places below the route...";
 
-        card.innerHTML = `
-          <div class="time">${article.time}</div>
-          <h3>${article.title}</h3>
-          <p>${article.summary}</p>
-          <a href="${article.url}" target="_blank" rel="noopener noreferrer">Read on Wikipedia</a>
-        `;
+      try {
+        const samplePoints = generateSamplePoints(origin, destination, 12);
+        const candidates = [];
 
-        results.appendChild(card);
-      });
+        for (const point of samplePoints) {
+          const nearby = await fetchGeoSearch(point.lat, point.lon);
+
+          const filtered = nearby
+            .filter(item => passesTitleFilter(item.title))
+            .sort((a, b) => {
+              const scoreA = scoreTitle(a.title) - (a.dist / 5000);
+              const scoreB = scoreTitle(b.title) - (b.dist / 5000);
+              return scoreB - scoreA;
+            });
+
+          const best = filtered[0];
+          if (!best) continue;
+
+          candidates.push({
+            title: best.title,
+            distance: best.dist,
+            progress: point.progress
+          });
+        }
+
+        const deduped = [];
+        const seen = new Set();
+
+        for (const item of candidates) {
+          const key = item.title.toLowerCase();
+          if (!seen.has(key)) {
+            seen.add(key);
+            deduped.push(item);
+          }
+        }
+
+        const topResults = deduped.slice(0, 8);
+        const summaries = [];
+
+        for (const item of topResults) {
+          const summary = await fetchSummary(item.title);
+          if (!summary) continue;
+
+          summaries.push({
+            ...summary,
+            progress: item.progress,
+            distance: item.distance
+          });
+        }
+
+        if (summaries.length === 0) {
+          error.textContent = "I couldn't find good Wikipedia articles for that route. Try one of the suggested airport pairs.";
+          return;
+        }
+
+        const title = document.createElement("div");
+        title.className = "route-title";
+        title.textContent = `${origin.name} to ${destination.name}`;
+        results.appendChild(title);
+
+        const subtitle = document.createElement("div");
+        subtitle.className = "route-subtitle";
+        subtitle.textContent = "Approximate route using airport coordinates and nearby Wikipedia articles.";
+        results.appendChild(subtitle);
+
+        summaries.forEach(article => {
+          const card = document.createElement("div");
+          card.className = "card";
+
+          card.innerHTML = `
+            <div class="time">${formatProgress(article.progress)}</div>
+            <div class="meta">Nearest article found roughly ${Math.round(article.distance / 1000)} km from the sampled route point</div>
+            <h3>${article.title}</h3>
+            <p>${article.summary}</p>
+            <a href="${article.url}" target="_blank" rel="noopener noreferrer">Read on Wikipedia</a>
+          `;
+
+          results.appendChild(card);
+        });
+
+        const footerNote = document.createElement("div");
+        footerNote.className = "footer-note";
+        footerNote.textContent = "This is a rough approximation, not a real tracked flight path.";
+        results.appendChild(footerNote);
+      } catch (err) {
+        error.textContent = "Something went wrong while talking to Wikipedia. Try again in a moment.";
+      } finally {
+        loading.textContent = "";
+        button.disabled = false;
+      }
     }
   </script>
 </body>
