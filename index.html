@@ -67,6 +67,13 @@
       box-sizing: border-box;
     }
 
+    .button-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 8px;
+    }
+
     button {
       padding: 12px 18px;
       font-size: 1rem;
@@ -75,7 +82,6 @@
       background: #1f4f99;
       color: white;
       cursor: pointer;
-      margin-top: 8px;
     }
 
     button:hover {
@@ -84,7 +90,19 @@
 
     button:disabled {
       background: #8aa3c9;
-      cursor: wait;
+      cursor: not-allowed;
+    }
+
+    #openAllButton {
+      background: #4d4d4d;
+    }
+
+    #openAllButton:hover {
+      background: #333;
+    }
+
+    #openAllButton:disabled {
+      background: #999;
     }
 
     .note {
@@ -177,7 +195,7 @@
   <div class="wrap">
     <h1>Below Me</h1>
     <p class="intro">
-      Enter an origin and destination airport and get a rough reading list of interesting places beneath the journey, in the order you'd pass over them.
+      Enter an origin and destination airport and get a rough reading list of interesting places below you, in the order you'd pass over them.
     </p>
 
     <div class="box">
@@ -193,7 +211,10 @@
         </div>
       </div>
 
-      <button id="generateButton" onclick="generateRoute()">Generate articles</button>
+      <div class="button-row">
+        <button id="generateButton" onclick="generateRoute()">Generate articles</button>
+        <button id="openAllButton" onclick="openAllArticles()" disabled>Open all Wikipedia pages</button>
+      </div>
 
       <div class="note">Free browser-only version using rough route sampling and Wikipedia nearby articles.</div>
       <div class="small">
@@ -247,6 +268,8 @@
       /A\.F\.C\./i,
       /Cemetery/i
     ];
+
+    let latestSummaries = [];
 
     function lerp(a, b, t) {
       return a + (b - a) * t;
@@ -332,10 +355,13 @@
       const error = document.getElementById("error");
       const loading = document.getElementById("loading");
       const button = document.getElementById("generateButton");
+      const openAllButton = document.getElementById("openAllButton");
 
       results.innerHTML = "";
       error.textContent = "";
       loading.textContent = "";
+      latestSummaries = [];
+      openAllButton.disabled = true;
 
       if (!originCode || !destinationCode) {
         error.textContent = "Please enter both an origin and destination airport code.";
@@ -413,6 +439,9 @@
           return;
         }
 
+        latestSummaries = summaries;
+        openAllButton.disabled = false;
+
         const title = document.createElement("div");
         title.className = "route-title";
         title.textContent = `${origin.name} to ${destination.name}`;
@@ -448,6 +477,16 @@
         loading.textContent = "";
         button.disabled = false;
       }
+    }
+
+    function openAllArticles() {
+      if (!latestSummaries || latestSummaries.length === 0) {
+        return;
+      }
+
+      latestSummaries.forEach(article => {
+        window.open(article.url, "_blank", "noopener,noreferrer");
+      });
     }
   </script>
 </body>
