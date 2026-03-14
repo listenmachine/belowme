@@ -40,6 +40,18 @@
       box-shadow: 0 4px 12px rgba(0,0,0,0.04);
     }
 
+    .input-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 16px;
+      margin-bottom: 12px;
+    }
+
+    .input-group {
+      flex: 1;
+      min-width: 220px;
+    }
+
     label {
       display: block;
       font-weight: bold;
@@ -48,12 +60,11 @@
 
     input {
       width: 100%;
-      max-width: 320px;
       padding: 12px;
       font-size: 1rem;
       border: 1px solid #bbb;
       border-radius: 10px;
-      margin-bottom: 12px;
+      box-sizing: border-box;
     }
 
     button {
@@ -64,6 +75,7 @@
       background: #1f4f99;
       color: white;
       cursor: pointer;
+      margin-top: 8px;
     }
 
     button:hover {
@@ -78,6 +90,12 @@
 
     .results {
       margin-top: 30px;
+    }
+
+    .route-title {
+      font-size: 1.25rem;
+      font-weight: bold;
+      margin-bottom: 18px;
     }
 
     .card {
@@ -121,6 +139,7 @@
       color: #777;
       font-size: 0.9rem;
       margin-top: 8px;
+      line-height: 1.5;
     }
   </style>
 </head>
@@ -128,16 +147,31 @@
   <div class="wrap">
     <h1>Underwing</h1>
     <p class="intro">
-      Enter a flight number and get a reading list of interesting places and features beneath the route, in the order you'd pass over them.
+      Enter an origin and destination airport and get a reading list of interesting places and features beneath the route, in the order you'd roughly pass over them.
     </p>
 
     <div class="box">
-      <label for="flightNumber">Flight number</label>
-      <input id="flightNumber" type="text" placeholder="Try BA150 or AA100" />
-      <br />
+      <div class="input-row">
+        <div class="input-group">
+          <label for="origin">Origin airport</label>
+          <input id="origin" type="text" placeholder="Try LHR" />
+        </div>
+
+        <div class="input-group">
+          <label for="destination">Destination airport</label>
+          <input id="destination" type="text" placeholder="Try ATH" />
+        </div>
+      </div>
+
       <button onclick="generateRoute()">Generate articles</button>
-      <div class="note">Demo version with a few built-in flights for now.</div>
-      <div class="small">Try: BA150, AA100, LH400</div>
+
+      <div class="note">Demo version with a few built-in route pairs for now.</div>
+      <div class="small">
+        Try these routes:<br />
+        LHR → ATH<br />
+        JFK → SFO<br />
+        FRA → ATH
+      </div>
     </div>
 
     <div id="error" class="error"></div>
@@ -145,126 +179,144 @@
   </div>
 
   <script>
-    const flights = {
-      "BA150": [
-        {
-          time: "00:35",
-          title: "South Downs",
-          summary: "A range of chalk hills in south-eastern England, known for rolling grassland, ancient tracks, and long views.",
-          url: "https://en.wikipedia.org/wiki/South_Downs"
-        },
-        {
-          time: "01:10",
-          title: "English Channel",
-          summary: "The arm of the Atlantic that separates southern England from northern France, one of the busiest shipping lanes in the world.",
-          url: "https://en.wikipedia.org/wiki/English_Channel"
-        },
-        {
-          time: "01:45",
-          title: "Paris",
-          summary: "The capital of France, shaped by Roman origins, medieval growth, royal power, revolution, and nineteenth-century rebuilding.",
-          url: "https://en.wikipedia.org/wiki/Paris"
-        },
-        {
-          time: "02:35",
-          title: "Burgundy",
-          summary: "A historical region of eastern France associated with wine, monasteries, dukes, and a long political life in medieval Europe.",
-          url: "https://en.wikipedia.org/wiki/Burgundy"
-        },
-        {
-          time: "03:30",
-          title: "Alps",
-          summary: "One of Europe's major mountain ranges, stretching across several countries and long treated as both barrier and thoroughfare.",
-          url: "https://en.wikipedia.org/wiki/Alps"
-        }
-      ],
-      "AA100": [
-        {
-          time: "00:30",
-          title: "Catskill Mountains",
-          summary: "A mountain region of southeastern New York, long associated with forests, rivers, resorts, and American landscape painting.",
-          url: "https://en.wikipedia.org/wiki/Catskill_Mountains"
-        },
-        {
-          time: "01:15",
-          title: "Susquehanna River",
-          summary: "A major river of the eastern United States flowing through New York, Pennsylvania, and Maryland into the Chesapeake Bay.",
-          url: "https://en.wikipedia.org/wiki/Susquehanna_River"
-        },
-        {
-          time: "02:40",
-          title: "Chicago",
-          summary: "A city on Lake Michigan that grew into one of the major railway, industrial, architectural, and cultural centres of the United States.",
-          url: "https://en.wikipedia.org/wiki/Chicago"
-        },
-        {
-          time: "03:50",
-          title: "Mississippi River",
-          summary: "One of the world's great river systems, running through the centre of the United States and shaping trade, travel, and settlement.",
-          url: "https://en.wikipedia.org/wiki/Mississippi_River"
-        },
-        {
-          time: "05:20",
-          title: "Rocky Mountains",
-          summary: "A vast mountain system in western North America, extending from Canada into the American Southwest.",
-          url: "https://en.wikipedia.org/wiki/Rocky_Mountains"
-        }
-      ],
-      "LH400": [
-        {
-          time: "00:40",
-          title: "Rhine",
-          summary: "A major European river associated with trade, frontiers, industry, folklore, and a long contested political geography.",
-          url: "https://en.wikipedia.org/wiki/Rhine"
-        },
-        {
-          time: "01:50",
-          title: "Black Forest",
-          summary: "A wooded mountain region in south-western Germany, famous for dense forest, clockmaking traditions, and folklore.",
-          url: "https://en.wikipedia.org/wiki/Black_Forest"
-        },
-        {
-          time: "03:25",
-          title: "Alps",
-          summary: "One of Europe's major mountain ranges, crossing several countries and shaping climate, travel, and settlement.",
-          url: "https://en.wikipedia.org/wiki/Alps"
-        },
-        {
-          time: "05:10",
-          title: "Adriatic Sea",
-          summary: "The northernmost arm of the Mediterranean Sea, lying between the Italian Peninsula and the Balkans.",
-          url: "https://en.wikipedia.org/wiki/Adriatic_Sea"
-        },
-        {
-          time: "06:30",
-          title: "Aegean Sea",
-          summary: "An arm of the Mediterranean between Greece and Anatolia, full of islands and deeply bound up with classical history.",
-          url: "https://en.wikipedia.org/wiki/Aegean_Sea"
-        }
-      ]
+    const routes = {
+      "LHR-ATH": {
+        label: "London Heathrow to Athens",
+        articles: [
+          {
+            time: "00:40",
+            title: "English Channel",
+            summary: "The arm of the Atlantic that separates southern England from northern France, and one of the busiest shipping lanes in the world.",
+            url: "https://en.wikipedia.org/wiki/English_Channel"
+          },
+          {
+            time: "01:20",
+            title: "Paris",
+            summary: "The capital of France, shaped by Roman origins, medieval growth, monarchy, revolution, and nineteenth-century rebuilding.",
+            url: "https://en.wikipedia.org/wiki/Paris"
+          },
+          {
+            time: "02:15",
+            title: "Alps",
+            summary: "One of Europe's major mountain ranges, stretching across several countries and long treated as both barrier and thoroughfare.",
+            url: "https://en.wikipedia.org/wiki/Alps"
+          },
+          {
+            time: "03:35",
+            title: "Adriatic Sea",
+            summary: "The northernmost arm of the Mediterranean Sea, lying between the Italian Peninsula and the Balkans.",
+            url: "https://en.wikipedia.org/wiki/Adriatic_Sea"
+          },
+          {
+            time: "04:25",
+            title: "Aegean Sea",
+            summary: "An arm of the Mediterranean between Greece and Anatolia, full of islands and deeply bound up with classical history.",
+            url: "https://en.wikipedia.org/wiki/Aegean_Sea"
+          }
+        ]
+      },
+
+      "JFK-SFO": {
+        label: "New York JFK to San Francisco",
+        articles: [
+          {
+            time: "00:30",
+            title: "Catskill Mountains",
+            summary: "A mountain region of southeastern New York, long associated with forests, rivers, resorts, and American landscape painting.",
+            url: "https://en.wikipedia.org/wiki/Catskill_Mountains"
+          },
+          {
+            time: "01:15",
+            title: "Susquehanna River",
+            summary: "A major river of the eastern United States flowing through New York, Pennsylvania, and Maryland into the Chesapeake Bay.",
+            url: "https://en.wikipedia.org/wiki/Susquehanna_River"
+          },
+          {
+            time: "02:40",
+            title: "Chicago",
+            summary: "A city on Lake Michigan that grew into one of the major railway, industrial, architectural, and cultural centres of the United States.",
+            url: "https://en.wikipedia.org/wiki/Chicago"
+          },
+          {
+            time: "03:50",
+            title: "Mississippi River",
+            summary: "One of the world's great river systems, running through the centre of the United States and shaping trade, travel, and settlement.",
+            url: "https://en.wikipedia.org/wiki/Mississippi_River"
+          },
+          {
+            time: "05:20",
+            title: "Rocky Mountains",
+            summary: "A vast mountain system in western North America, extending from Canada into the American Southwest.",
+            url: "https://en.wikipedia.org/wiki/Rocky_Mountains"
+          }
+        ]
+      },
+
+      "FRA-ATH": {
+        label: "Frankfurt to Athens",
+        articles: [
+          {
+            time: "00:35",
+            title: "Rhine",
+            summary: "A major European river associated with trade, frontiers, industry, folklore, and a long contested political geography.",
+            url: "https://en.wikipedia.org/wiki/Rhine"
+          },
+          {
+            time: "01:05",
+            title: "Black Forest",
+            summary: "A wooded mountain region in south-western Germany, famous for dense forest, clockmaking traditions, and folklore.",
+            url: "https://en.wikipedia.org/wiki/Black_Forest"
+          },
+          {
+            time: "02:05",
+            title: "Alps",
+            summary: "One of Europe's major mountain ranges, crossing several countries and shaping climate, travel, and settlement.",
+            url: "https://en.wikipedia.org/wiki/Alps"
+          },
+          {
+            time: "03:20",
+            title: "Adriatic Sea",
+            summary: "The northernmost arm of the Mediterranean Sea, lying between the Italian Peninsula and the Balkans.",
+            url: "https://en.wikipedia.org/wiki/Adriatic_Sea"
+          },
+          {
+            time: "04:05",
+            title: "Aegean Sea",
+            summary: "An arm of the Mediterranean between Greece and Anatolia, full of islands and deeply bound up with classical history.",
+            url: "https://en.wikipedia.org/wiki/Aegean_Sea"
+          }
+        ]
+      }
     };
 
     function generateRoute() {
-      const input = document.getElementById("flightNumber").value.trim().toUpperCase();
+      const origin = document.getElementById("origin").value.trim().toUpperCase();
+      const destination = document.getElementById("destination").value.trim().toUpperCase();
       const results = document.getElementById("results");
       const error = document.getElementById("error");
 
       results.innerHTML = "";
       error.textContent = "";
 
-      if (!input) {
-        error.textContent = "Please enter a flight number.";
+      if (!origin || !destination) {
+        error.textContent = "Please enter both an origin and destination airport code.";
         return;
       }
 
-      const articles = flights[input];
+      const routeKey = `${origin}-${destination}`;
+      const route = routes[routeKey];
 
-      if (!articles) {
-        error.textContent = "That flight is not in this demo yet. Try BA150, AA100, or LH400.";
+      if (!route) {
+        error.textContent = "That route is not in this demo yet. Try LHR to ATH, JFK to SFO, or FRA to ATH.";
         return;
       }
 
-      articles.forEach(article => {
+      const title = document.createElement("div");
+      title.className = "route-title";
+      title.textContent = route.label;
+      results.appendChild(title);
+
+      route.articles.forEach(article => {
         const card = document.createElement("div");
         card.className = "card";
 
@@ -272,7 +324,7 @@
           <div class="time">${article.time}</div>
           <h3>${article.title}</h3>
           <p>${article.summary}</p>
-          <a href="${article.url}" target="_blank">Read on Wikipedia</a>
+          <a href="${article.url}" target="_blank" rel="noopener noreferrer">Read on Wikipedia</a>
         `;
 
         results.appendChild(card);
