@@ -14,7 +14,7 @@
     }
 
     .wrap {
-      max-width: 920px;
+      max-width: 980px;
       margin: 0 auto;
       padding: 40px 20px 60px;
     }
@@ -27,8 +27,8 @@
     p.intro {
       font-size: 1.1rem;
       color: #555;
-      max-width: 760px;
-      line-height: 1.5;
+      max-width: 780px;
+      line-height: 1.6;
     }
 
     .box {
@@ -93,15 +93,15 @@
       cursor: not-allowed;
     }
 
-    #openAllButton {
+    #downloadButton {
       background: #4d4d4d;
     }
 
-    #openAllButton:hover {
+    #downloadButton:hover {
       background: #333;
     }
 
-    #openAllButton:disabled {
+    #downloadButton:disabled {
       background: #999;
     }
 
@@ -109,65 +109,6 @@
       margin-top: 12px;
       color: #666;
       font-size: 0.95rem;
-    }
-
-    .results {
-      margin-top: 30px;
-    }
-
-    .route-title {
-      font-size: 1.25rem;
-      font-weight: bold;
-      margin-bottom: 10px;
-    }
-
-    .route-subtitle {
-      color: #666;
-      margin-bottom: 18px;
-      line-height: 1.5;
-    }
-
-    .card {
-      background: white;
-      border: 1px solid #ddd;
-      border-radius: 14px;
-      padding: 18px;
-      margin-bottom: 16px;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.04);
-    }
-
-    .time {
-      font-size: 0.9rem;
-      color: #666;
-      margin-bottom: 6px;
-    }
-
-    .meta {
-      font-size: 0.9rem;
-      color: #666;
-      margin-bottom: 8px;
-    }
-
-    .card h3 {
-      margin: 0 0 8px;
-    }
-
-    .card p {
-      margin: 0 0 10px;
-      line-height: 1.5;
-      color: #444;
-    }
-
-    .card a {
-      color: #1f4f99;
-      text-decoration: none;
-      font-weight: bold;
-    }
-
-    .error {
-      color: #a12626;
-      margin-top: 18px;
-      font-weight: bold;
     }
 
     .small {
@@ -183,11 +124,129 @@
       font-weight: bold;
     }
 
+    .error {
+      color: #a12626;
+      margin-top: 18px;
+      font-weight: bold;
+    }
+
+    .results {
+      margin-top: 30px;
+    }
+
+    .route-title {
+      font-size: 1.35rem;
+      font-weight: bold;
+      margin-bottom: 10px;
+    }
+
+    .route-subtitle {
+      color: #666;
+      margin-bottom: 18px;
+      line-height: 1.5;
+    }
+
     .footer-note {
       margin-top: 24px;
       color: #777;
       font-size: 0.9rem;
       line-height: 1.5;
+    }
+
+    .article-box {
+      background: white;
+      border: 1px solid #ddd;
+      border-radius: 14px;
+      margin-bottom: 16px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.04);
+      overflow: hidden;
+    }
+
+    .article-header {
+      padding: 18px;
+    }
+
+    .article-time {
+      font-size: 0.9rem;
+      color: #666;
+      margin-bottom: 6px;
+    }
+
+    .article-meta {
+      font-size: 0.9rem;
+      color: #666;
+      margin-bottom: 8px;
+      line-height: 1.4;
+    }
+
+    .article-header h3 {
+      margin: 0 0 10px;
+      font-size: 1.25rem;
+    }
+
+    .article-summary {
+      margin: 0 0 12px;
+      line-height: 1.6;
+      color: #444;
+    }
+
+    .article-image {
+      width: 100%;
+      max-height: 260px;
+      object-fit: cover;
+      display: block;
+      border-radius: 10px;
+      margin-bottom: 12px;
+    }
+
+    .article-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      align-items: center;
+    }
+
+    .expand-button {
+      background: #1f4f99;
+    }
+
+    .wiki-link {
+      color: #1f4f99;
+      text-decoration: none;
+      font-weight: bold;
+    }
+
+    .article-expanded {
+      display: none;
+      padding: 0 18px 18px;
+      border-top: 1px solid #eee;
+    }
+
+    .article-expanded.open {
+      display: block;
+    }
+
+    .article-expanded p {
+      line-height: 1.7;
+      color: #333;
+      margin: 14px 0 0;
+      white-space: pre-line;
+    }
+
+    .badge-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 10px;
+    }
+
+    .badge {
+      display: inline-block;
+      font-size: 0.78rem;
+      color: #555;
+      background: #f0f0f0;
+      padding: 5px 8px;
+      border-radius: 999px;
     }
   </style>
 </head>
@@ -195,7 +254,7 @@
   <div class="wrap">
     <h1>Below Me</h1>
     <p class="intro">
-      Enter an origin and destination airport and get a rough reading list of interesting places below you, in the order you'd pass over them.
+      Enter an origin and destination airport and get a rough reading list of interesting places below you, in the order you’d pass over them. Each stop loads into one page and can be expanded for a longer read.
     </p>
 
     <div class="box">
@@ -213,17 +272,19 @@
 
       <div class="button-row">
         <button id="generateButton" onclick="generateRoute()">Generate articles</button>
-        <button id="openAllButton" onclick="openAllArticles()" disabled>Open all Wikipedia pages</button>
+        <button id="downloadButton" onclick="downloadTrip()" disabled>Download this trip</button>
       </div>
 
-      <div class="note">Free browser-only version using rough route sampling and Wikipedia nearby articles.</div>
+      <div class="note">Free browser-only version using rough route sampling and Wikipedia article data.</div>
       <div class="small">
         Try these airport pairs:<br />
         LHR → ATH<br />
         JFK → SFO<br />
         FRA → ATH<br />
         CDG → FCO<br />
-        LAX → SEA
+        LAX → SEA<br />
+        BOS → MAD<br />
+        DUB → BCN
       </div>
     </div>
 
@@ -266,16 +327,25 @@
       /football club/i,
       /F\.C\./i,
       /A\.F\.C\./i,
-      /Cemetery/i
+      /Cemetery/i,
+      /High School/i,
+      /College/i,
+      /Ward/i,
+      /Township/i,
+      /County Route/i
     ];
 
-    let latestSummaries = [];
+    let latestTrip = {
+      originName: "",
+      destinationName: "",
+      articles: []
+    };
 
     function lerp(a, b, t) {
       return a + (b - a) * t;
     }
 
-    function generateSamplePoints(start, end, samples = 12) {
+    function generateSamplePoints(start, end, samples = 18) {
       const points = [];
       for (let i = 1; i < samples; i++) {
         const t = i / samples;
@@ -297,37 +367,80 @@
       return !bannedTitlePatterns.some(pattern => pattern.test(title));
     }
 
+    function categoryForTitle(title) {
+      const checks = [
+        { pattern: /Sea$/i, label: "Sea" },
+        { pattern: /Ocean$/i, label: "Ocean" },
+        { pattern: /River$/i, label: "River" },
+        { pattern: /Lake$/i, label: "Lake" },
+        { pattern: /Mountains$/i, label: "Mountain range" },
+        { pattern: /Mountain$/i, label: "Mountain" },
+        { pattern: /Alps$/i, label: "Mountain range" },
+        { pattern: /Forest$/i, label: "Forest" },
+        { pattern: /Desert$/i, label: "Desert" },
+        { pattern: /Island$/i, label: "Island" },
+        { pattern: /Islands$/i, label: "Islands" },
+        { pattern: /Channel$/i, label: "Channel" },
+        { pattern: /Bay$/i, label: "Bay" },
+        { pattern: /Gulf$/i, label: "Gulf" }
+      ];
+
+      for (const check of checks) {
+        if (check.pattern.test(title)) return check.label;
+      }
+
+      return "Place";
+    }
+
     function scoreTitle(title) {
       let score = 0;
 
-      const bonuses = [
+      const strongBonuses = [
         /Sea$/i,
         /Ocean$/i,
         /Mountains$/i,
-        /Mountain$/i,
         /River$/i,
         /Lake$/i,
-        /Islands$/i,
         /Island$/i,
-        /Channel$/i,
+        /Islands$/i,
         /Forest$/i,
         /Desert$/i,
+        /Channel$/i,
         /Bay$/i,
         /Gulf$/i,
         /Alps$/i
       ];
 
-      bonuses.forEach(pattern => {
+      const mediumBonuses = [
+        /Mount/i,
+        /National Park/i,
+        /Archipelago/i,
+        /Peninsula/i,
+        /Valley/i,
+        /Plateau/i
+      ];
+
+      strongBonuses.forEach(pattern => {
+        if (pattern.test(title)) score += 5;
+      });
+
+      mediumBonuses.forEach(pattern => {
         if (pattern.test(title)) score += 3;
       });
 
-      if (title.split(" ").length <= 3) score += 1;
+      if (title.split(" ").length <= 4) score += 1;
 
       return score;
     }
 
+    function shortenText(text, maxLength) {
+      if (!text) return "";
+      if (text.length <= maxLength) return text;
+      return text.slice(0, maxLength).replace(/\s+\S*$/, "") + "…";
+    }
+
     async function fetchGeoSearch(lat, lon) {
-      const url = `https://en.wikipedia.org/w/api.php?action=query&list=geosearch&gscoord=${lat}|${lon}&gsradius=10000&gslimit=10&format=json&origin=*`;
+      const url = `https://en.wikipedia.org/w/api.php?action=query&list=geosearch&gscoord=${lat}|${lon}&gsradius=15000&gslimit=18&format=json&origin=*`;
       const response = await fetch(url);
       if (!response.ok) throw new Error("Failed to fetch nearby articles");
       const data = await response.json();
@@ -343,9 +456,91 @@
 
       return {
         title: data.title,
-        summary: data.extract,
-        url: data.content_urls?.desktop?.page || `https://en.wikipedia.org/wiki/${encodeURIComponent(title)}`
+        shortSummary: shortenText(data.extract, 260),
+        longSummary: data.extract,
+        url: data.content_urls?.desktop?.page || `https://en.wikipedia.org/wiki/${encodeURIComponent(title)}`,
+        image: data.thumbnail?.source || "",
+        description: data.description || ""
       };
+    }
+
+    function renderArticles(originName, destinationName, articles) {
+      const results = document.getElementById("results");
+      results.innerHTML = "";
+
+      const title = document.createElement("div");
+      title.className = "route-title";
+      title.textContent = `${originName} to ${destinationName}`;
+      results.appendChild(title);
+
+      const subtitle = document.createElement("div");
+      subtitle.className = "route-subtitle";
+      subtitle.textContent = "Approximate route using airport coordinates and preloaded Wikipedia article data.";
+      results.appendChild(subtitle);
+
+      articles.forEach((article, index) => {
+        const box = document.createElement("div");
+        box.className = "article-box";
+
+        const descriptionBadge = article.description
+          ? `<span class="badge">${escapeHtml(article.description)}</span>`
+          : "";
+
+        box.innerHTML = `
+          <div class="article-header">
+            <div class="article-time">${formatProgress(article.progress)}</div>
+            <div class="article-meta">Found roughly ${Math.round(article.distance / 1000)} km from the sampled route point</div>
+            <div class="badge-row">
+              <span class="badge">${escapeHtml(article.category)}</span>
+              ${descriptionBadge}
+            </div>
+            <h3>${escapeHtml(article.title)}</h3>
+            ${article.image ? `<img class="article-image" src="${article.image}" alt="${escapeHtml(article.title)}" />` : ""}
+            <p class="article-summary">${escapeHtml(article.shortSummary)}</p>
+            <div class="article-actions">
+              <button class="expand-button" onclick="toggleArticle(${index})" id="toggle-${index}">Expand</button>
+              <a class="wiki-link" href="${article.url}" target="_blank" rel="noopener noreferrer">Read on Wikipedia</a>
+            </div>
+          </div>
+          <div class="article-expanded" id="expanded-${index}">
+            <p>${escapeHtml(article.longSummary)}</p>
+          </div>
+        `;
+
+        results.appendChild(box);
+      });
+
+      const footerNote = document.createElement("div");
+      footerNote.className = "footer-note";
+      footerNote.textContent = "This is a rough approximation, not a real tracked flight path. Expanders work offline if the page has already loaded, and downloading the trip is more reliable still.";
+      results.appendChild(footerNote);
+    }
+
+    function toggleArticle(index) {
+      const expanded = document.getElementById(`expanded-${index}`);
+      const button = document.getElementById(`toggle-${index}`);
+
+      if (!expanded || !button) return;
+
+      const isOpen = expanded.classList.contains("open");
+
+      if (isOpen) {
+        expanded.classList.remove("open");
+        button.textContent = "Expand";
+      } else {
+        expanded.classList.add("open");
+        button.textContent = "Collapse";
+      }
+    }
+
+    function escapeHtml(text) {
+      if (!text) return "";
+      return text
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
     }
 
     async function generateRoute() {
@@ -354,14 +549,14 @@
       const results = document.getElementById("results");
       const error = document.getElementById("error");
       const loading = document.getElementById("loading");
-      const button = document.getElementById("generateButton");
-      const openAllButton = document.getElementById("openAllButton");
+      const generateButton = document.getElementById("generateButton");
+      const downloadButton = document.getElementById("downloadButton");
 
       results.innerHTML = "";
       error.textContent = "";
       loading.textContent = "";
-      latestSummaries = [];
-      openAllButton.disabled = true;
+      latestTrip = { originName: "", destinationName: "", articles: [] };
+      downloadButton.disabled = true;
 
       if (!originCode || !destinationCode) {
         error.textContent = "Please enter both an origin and destination airport code.";
@@ -372,7 +567,7 @@
       const destination = airports[destinationCode];
 
       if (!origin || !destination) {
-        error.textContent = "One or both airport codes are not in this small built-in airport list yet.";
+        error.textContent = "One or both airport codes are not in this built-in airport list yet.";
         return;
       }
 
@@ -381,11 +576,11 @@
         return;
       }
 
-      button.disabled = true;
+      generateButton.disabled = true;
       loading.textContent = "Looking up places below the route...";
 
       try {
-        const samplePoints = generateSamplePoints(origin, destination, 12);
+        const samplePoints = generateSamplePoints(origin, destination, 18);
         const candidates = [];
 
         for (const point of samplePoints) {
@@ -394,18 +589,20 @@
           const filtered = nearby
             .filter(item => passesTitleFilter(item.title))
             .sort((a, b) => {
-              const scoreA = scoreTitle(a.title) - (a.dist / 5000);
-              const scoreB = scoreTitle(b.title) - (b.dist / 5000);
+              const scoreA = scoreTitle(a.title) - (a.dist / 5500);
+              const scoreB = scoreTitle(b.title) - (b.dist / 5500);
               return scoreB - scoreA;
             });
 
-          const best = filtered[0];
-          if (!best) continue;
+          const topFew = filtered.slice(0, 3);
 
-          candidates.push({
-            title: best.title,
-            distance: best.dist,
-            progress: point.progress
+          topFew.forEach(item => {
+            candidates.push({
+              title: item.title,
+              distance: item.dist,
+              progress: point.progress,
+              category: categoryForTitle(item.title)
+            });
           });
         }
 
@@ -420,17 +617,32 @@
           }
         }
 
-        const topResults = deduped.slice(0, 8);
+        deduped.sort((a, b) => a.progress - b.progress);
+
+        const moreVaried = [];
+        const recentCategories = [];
+
+        for (const item of deduped) {
+          const repeatedCategory = recentCategories.slice(-2).every(cat => cat === item.category);
+          if (repeatedCategory && moreVaried.length > 0) continue;
+
+          moreVaried.push(item);
+          recentCategories.push(item.category);
+
+          if (moreVaried.length >= 12) break;
+        }
+
         const summaries = [];
 
-        for (const item of topResults) {
+        for (const item of moreVaried) {
           const summary = await fetchSummary(item.title);
           if (!summary) continue;
 
           summaries.push({
             ...summary,
             progress: item.progress,
-            distance: item.distance
+            distance: item.distance,
+            category: item.category
           });
         }
 
@@ -439,54 +651,162 @@
           return;
         }
 
-        latestSummaries = summaries;
-        openAllButton.disabled = false;
+        latestTrip = {
+          originName: origin.name,
+          destinationName: destination.name,
+          articles: summaries
+        };
 
-        const title = document.createElement("div");
-        title.className = "route-title";
-        title.textContent = `${origin.name} to ${destination.name}`;
-        results.appendChild(title);
-
-        const subtitle = document.createElement("div");
-        subtitle.className = "route-subtitle";
-        subtitle.textContent = "Approximate route using airport coordinates and nearby Wikipedia articles.";
-        results.appendChild(subtitle);
-
-        summaries.forEach(article => {
-          const card = document.createElement("div");
-          card.className = "card";
-
-          card.innerHTML = `
-            <div class="time">${formatProgress(article.progress)}</div>
-            <div class="meta">Nearest article found roughly ${Math.round(article.distance / 1000)} km from the sampled route point</div>
-            <h3>${article.title}</h3>
-            <p>${article.summary}</p>
-            <a href="${article.url}" target="_blank" rel="noopener noreferrer">Read on Wikipedia</a>
-          `;
-
-          results.appendChild(card);
-        });
-
-        const footerNote = document.createElement("div");
-        footerNote.className = "footer-note";
-        footerNote.textContent = "This is a rough approximation, not a real tracked flight path.";
-        results.appendChild(footerNote);
+        renderArticles(origin.name, destination.name, summaries);
+        downloadButton.disabled = false;
       } catch (err) {
         error.textContent = "Something went wrong while talking to Wikipedia. Try again in a moment.";
       } finally {
         loading.textContent = "";
-        button.disabled = false;
+        generateButton.disabled = false;
       }
     }
 
-    function openAllArticles() {
-      if (!latestSummaries || latestSummaries.length === 0) {
+    function downloadTrip() {
+      if (!latestTrip.articles || latestTrip.articles.length === 0) {
         return;
       }
 
-      latestSummaries.forEach(article => {
-        window.open(article.url, "_blank", "noopener,noreferrer");
-      });
+      const safeName = `${latestTrip.originName}-to-${latestTrip.destinationName}`
+        .replace(/\s+/g, "-")
+        .replace(/[^a-zA-Z0-9\-]/g, "")
+        .toLowerCase();
+
+      const articleHtml = latestTrip.articles.map((article, index) => `
+        <div class="article-box">
+          <div class="article-header">
+            <div class="article-time">${formatProgress(article.progress)}</div>
+            <div class="article-meta">Found roughly ${Math.round(article.distance / 1000)} km from the sampled route point</div>
+            <div class="badge-row">
+              <span class="badge">${escapeHtml(article.category)}</span>
+              ${article.description ? `<span class="badge">${escapeHtml(article.description)}</span>` : ""}
+            </div>
+            <h3>${escapeHtml(article.title)}</h3>
+            ${article.image ? `<img class="article-image" src="${article.image}" alt="${escapeHtml(article.title)}" />` : ""}
+            <p class="article-summary">${escapeHtml(article.shortSummary)}</p>
+            <div class="article-expanded open">
+              <p>${escapeHtml(article.longSummary)}</p>
+            </div>
+            <p style="margin-top:14px;"><a class="wiki-link" href="${article.url}" target="_blank" rel="noopener noreferrer">Read on Wikipedia</a></p>
+          </div>
+        </div>
+      `).join("");
+
+      const offlineHtml = `
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Below Me – ${escapeHtml(latestTrip.originName)} to ${escapeHtml(latestTrip.destinationName)}</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f7f7f5;
+      color: #222;
+      margin: 0;
+      padding: 0;
+    }
+    .wrap {
+      max-width: 980px;
+      margin: 0 auto;
+      padding: 40px 20px 60px;
+    }
+    h1 {
+      font-size: 2.4rem;
+      margin-bottom: 10px;
+    }
+    p.intro, .route-subtitle, .footer-note {
+      color: #555;
+      line-height: 1.6;
+    }
+    .route-title {
+      font-size: 1.35rem;
+      font-weight: bold;
+      margin: 24px 0 10px;
+    }
+    .article-box {
+      background: white;
+      border: 1px solid #ddd;
+      border-radius: 14px;
+      margin-bottom: 16px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.04);
+      overflow: hidden;
+    }
+    .article-header {
+      padding: 18px;
+    }
+    .article-time, .article-meta {
+      font-size: 0.9rem;
+      color: #666;
+      margin-bottom: 8px;
+      line-height: 1.4;
+    }
+    .article-header h3 {
+      margin: 0 0 10px;
+      font-size: 1.25rem;
+    }
+    .article-summary, .article-expanded p {
+      line-height: 1.7;
+      color: #333;
+      white-space: pre-line;
+    }
+    .article-image {
+      width: 100%;
+      max-height: 260px;
+      object-fit: cover;
+      display: block;
+      border-radius: 10px;
+      margin-bottom: 12px;
+    }
+    .badge-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 10px;
+    }
+    .badge {
+      display: inline-block;
+      font-size: 0.78rem;
+      color: #555;
+      background: #f0f0f0;
+      padding: 5px 8px;
+      border-radius: 999px;
+    }
+    .wiki-link {
+      color: #1f4f99;
+      text-decoration: none;
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <h1>Below Me</h1>
+    <p class="intro">Offline trip reading file generated from preloaded Wikipedia article data.</p>
+    <div class="route-title">${escapeHtml(latestTrip.originName)} to ${escapeHtml(latestTrip.destinationName)}</div>
+    <div class="route-subtitle">Approximate route using airport coordinates and Wikipedia article data.</div>
+    ${articleHtml}
+    <div class="footer-note">This is a rough approximation, not a real tracked flight path.</div>
+  </div>
+</body>
+</html>
+      `.trim();
+
+      const blob = new Blob([offlineHtml], { type: "text/html" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `below-me-${safeName}.html`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
     }
   </script>
 </body>
