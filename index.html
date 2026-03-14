@@ -254,7 +254,7 @@
   <div class="wrap">
     <h1>Below Me</h1>
     <p class="intro">
-      Enter an origin and destination airport and get a rough reading list of more interesting things below you, in the order you’d pass over them. Each stop loads into one page and can be expanded for a longer read.
+      Enter an origin and destination airport and get a rough reading list of things below you, in the order you’d pass over them. Each stop loads into one page and can be expanded for a longer read.
     </p>
 
     <div class="box">
@@ -275,7 +275,7 @@
         <button id="downloadButton" onclick="downloadTrip()" disabled>Download this trip</button>
       </div>
 
-      <div class="note">Free browser-only version using rough route sampling and Wikipedia article data.</div>
+      <div class="note">Free browser-only version using rough route sampling and live Wikipedia article data.</div>
       <div class="small">
         Try these airport pairs:<br />
         LHR → ATH<br />
@@ -304,15 +304,10 @@
       "FCO": { name: "Rome Fiumicino", lat: 41.8003, lon: 12.2389 },
       "LAX": { name: "Los Angeles", lat: 33.9416, lon: -118.4085 },
       "SEA": { name: "Seattle", lat: 47.4502, lon: -122.3088 },
-      "ORD": { name: "Chicago O'Hare", lat: 41.9742, lon: -87.9073 },
       "BOS": { name: "Boston Logan", lat: 42.3656, lon: -71.0096 },
       "DUB": { name: "Dublin", lat: 53.4213, lon: -6.2701 },
       "BCN": { name: "Barcelona", lat: 41.2974, lon: 2.0833 },
-      "AMS": { name: "Amsterdam Schiphol", lat: 52.3105, lon: 4.7683 },
-      "MAD": { name: "Madrid", lat: 40.4983, lon: -3.5676 },
-      "LIS": { name: "Lisbon", lat: 38.7742, lon: -9.1342 },
-      "IST": { name: "Istanbul", lat: 41.2753, lon: 28.7519 },
-      "DXB": { name: "Dubai", lat: 25.2532, lon: 55.3657 }
+      "MAD": { name: "Madrid", lat: 40.4983, lon: -3.5676 }
     };
 
     const bannedTitlePatterns = [
@@ -337,7 +332,6 @@
       /Township/i,
       /County Route/i,
       /by-election/i,
-      /crater on/i,
       /minor planet/i
     ];
 
@@ -351,7 +345,7 @@
       return a + (b - a) * t;
     }
 
-    function generateSamplePoints(start, end, samples = 20) {
+    function generateSamplePoints(start, end, samples = 16) {
       const points = [];
       for (let i = 1; i < samples; i++) {
         const t = i / samples;
@@ -386,7 +380,6 @@
         { pattern: /Tower/i, label: "Tower" },
         { pattern: /Museum/i, label: "Museum" },
         { pattern: /National Park/i, label: "National park" },
-        { pattern: /Archaeological/i, label: "Archaeology" },
         { pattern: /Ruins/i, label: "Ruins" },
         { pattern: /Historic/i, label: "Historic site" },
         { pattern: /Sea$/i, label: "Sea" },
@@ -413,7 +406,7 @@
     function scoreTitle(title) {
       let score = 0;
 
-      const strongBonuses = [
+      const bonuses = [
         /Castle/i,
         /Fort/i,
         /Palace/i,
@@ -425,7 +418,6 @@
         /Tower/i,
         /Museum/i,
         /National Park/i,
-        /Archaeological/i,
         /Ruins/i,
         /Historic/i,
         /Monument/i,
@@ -437,27 +429,13 @@
         /Island$/i,
         /Channel$/i,
         /Bay$/i,
-        /Gulf$/i
-      ];
-
-      const mediumBonuses = [
-        /Valley/i,
-        /Plateau/i,
-        /Peninsula/i,
+        /Gulf$/i,
         /Cave/i,
-        /Observatory/i,
-        /Prison/i,
-        /Shipwreck/i,
-        /Aqueduct/i,
-        /Basilica/i
+        /Observatory/i
       ];
 
-      strongBonuses.forEach(pattern => {
-        if (pattern.test(title)) score += 6;
-      });
-
-      mediumBonuses.forEach(pattern => {
-        if (pattern.test(title)) score += 3;
+      bonuses.forEach(pattern => {
+        if (pattern.test(title)) score += 5;
       });
 
       if (title.split(" ").length <= 4) score += 1;
@@ -481,8 +459,8 @@
         .replace(/'/g, "&#039;");
     }
 
-    async function fetchGeoSearch(lat, lon) {
-      const url = `https://en.wikipedia.org/w/api.php?action=query&list=geosearch&gscoord=${lat}|${lon}&gsradius=50000&gslimit=25&format=json&origin=*`;
+    async function fetchGeoSearch(lat, lon, radius = 30000, limit = 20) {
+      const url = `https://en.wikipedia.org/w/api.php?action=query&list=geosearch&gscoord=${lat}|${lon}&gsradius=${radius}&gslimit=${limit}&format=json&origin=*`;
       const response = await fetch(url);
       if (!response.ok) throw new Error("Failed to fetch nearby articles");
       const data = await response.json();
@@ -490,7 +468,7 @@
     }
 
     async function fetchPageDetails(title) {
-      const url = `https://en.wikipedia.org/w/api.php?action=query&prop=extracts|pageimages|description|info&exintro=1&explaintext=1&inprop=url&piprop=thumbnail&pithumbsize=800&titles=${encodeURIComponent(title)}&format=json&origin=*`;
+      const url = `https://en.wikipedia.org/w/api.php?action=query&prop=extracts|pageimages|info&exintro=1&explaintext=1&inprop=url&piprop=thumbnail&pithumbsize=800&titles=${encodeURIComponent(title)}&format=json&origin=*`;
       const response = await fetch(url);
       if (!response.ok) return null;
       const data = await response.json();
@@ -505,7 +483,7 @@
         longSummary: page.extract,
         url: page.fullurl || `https://en.wikipedia.org/wiki/${encodeURIComponent(page.title)}`,
         image: page.thumbnail?.source || "",
-        description: page.description || ""
+        description: ""
       };
     }
 
@@ -527,17 +505,12 @@
         const box = document.createElement("div");
         box.className = "article-box";
 
-        const descriptionBadge = article.description
-          ? `<span class="badge">${escapeHtml(article.description)}</span>`
-          : "";
-
         box.innerHTML = `
           <div class="article-header">
             <div class="article-time">${formatProgress(article.progress)}</div>
             <div class="article-meta">Found roughly ${Math.round(article.distance / 1000)} km from the sampled route point</div>
             <div class="badge-row">
               <span class="badge">${escapeHtml(article.category)}</span>
-              ${descriptionBadge}
             </div>
             <h3>${escapeHtml(article.title)}</h3>
             ${article.image ? `<img class="article-image" src="${article.image}" alt="${escapeHtml(article.title)}" />` : ""}
@@ -615,13 +588,18 @@
       loading.textContent = "Looking up places below the route...";
 
       try {
-        const samplePoints = generateSamplePoints(origin, destination, 20);
+        const samplePoints = generateSamplePoints(origin, destination, 16);
         const candidates = [];
 
         for (const point of samplePoints) {
           let nearby = [];
+
           try {
-            nearby = await fetchGeoSearch(point.lat, point.lon);
+            nearby = await fetchGeoSearch(point.lat, point.lon, 30000, 20);
+
+            if (nearby.length < 3) {
+              nearby = await fetchGeoSearch(point.lat, point.lon, 80000, 20);
+            }
           } catch (e) {
             continue;
           }
@@ -630,13 +608,11 @@
             .filter(item => passesTitleFilter(item.title))
             .map(item => ({
               ...item,
-              score: scoreTitle(item.title) - (item.dist / 15000)
+              score: scoreTitle(item.title) - (item.dist / 20000)
             }))
             .sort((a, b) => b.score - a.score);
 
-          const topFew = filtered.slice(0, 4);
-
-          topFew.forEach(item => {
+          filtered.slice(0, 4).forEach(item => {
             candidates.push({
               title: item.title,
               distance: item.dist,
@@ -652,8 +628,8 @@
           return;
         }
 
-        const deduped = [];
         const seen = new Set();
+        const deduped = [];
 
         for (const item of candidates) {
           const key = item.title.toLowerCase();
@@ -664,30 +640,30 @@
         }
 
         deduped.sort((a, b) => {
-          if (Math.abs(a.progress - b.progress) < 0.02) {
+          if (Math.abs(a.progress - b.progress) < 0.03) {
             return b.rawScore - a.rawScore;
           }
           return a.progress - b.progress;
         });
 
-        const varied = [];
+        const chosen = [];
         const recentCategories = [];
 
         for (const item of deduped) {
-          const sameAsRecent = recentCategories.slice(-2).includes(item.category) && item.category !== "Place";
-          if (sameAsRecent && varied.length >= 5) {
+          const repeatedCategory = recentCategories.slice(-2).includes(item.category) && item.category !== "Place";
+          if (repeatedCategory && chosen.length >= 5) {
             continue;
           }
 
-          varied.push(item);
+          chosen.push(item);
           recentCategories.push(item.category);
 
-          if (varied.length >= 14) break;
+          if (chosen.length >= 12) break;
         }
 
         const summaries = [];
 
-        for (const item of varied) {
+        for (const item of chosen) {
           const detail = await fetchPageDetails(item.title);
           if (!detail) continue;
 
@@ -697,12 +673,10 @@
             distance: item.distance,
             category: item.category
           });
-
-          if (summaries.length >= 12) break;
         }
 
         if (summaries.length === 0) {
-          error.textContent = "I couldn't find good Wikipedia articles for that route.";
+          error.textContent = "I found nearby pages, but Wikipedia didn't return readable article extracts for them.";
           return;
         }
 
@@ -739,7 +713,6 @@
             <div class="article-meta">Found roughly ${Math.round(article.distance / 1000)} km from the sampled route point</div>
             <div class="badge-row">
               <span class="badge">${escapeHtml(article.category)}</span>
-              ${article.description ? `<span class="badge">${escapeHtml(article.description)}</span>` : ""}
             </div>
             <h3>${escapeHtml(article.title)}</h3>
             ${article.image ? `<img class="article-image" src="${article.image}" alt="${escapeHtml(article.title)}" />` : ""}
