@@ -254,7 +254,7 @@
   <div class="wrap">
     <h1>Below Me</h1>
     <p class="intro">
-      Enter an origin and destination airport and get a rough reading list of interesting places below you, in the order you’d pass over them. Each stop loads into one page and can be expanded for a longer read.
+      Enter an origin and destination airport and get a rough reading list of more interesting things below you, in the order you’d pass over them. Each stop loads into one page and can be expanded for a longer read.
     </p>
 
     <div class="box">
@@ -309,7 +309,10 @@
       "DUB": { name: "Dublin", lat: 53.4213, lon: -6.2701 },
       "BCN": { name: "Barcelona", lat: 41.2974, lon: 2.0833 },
       "AMS": { name: "Amsterdam Schiphol", lat: 52.3105, lon: 4.7683 },
-      "MAD": { name: "Madrid", lat: 40.4983, lon: -3.5676 }
+      "MAD": { name: "Madrid", lat: 40.4983, lon: -3.5676 },
+      "LIS": { name: "Lisbon", lat: 38.7742, lon: -9.1342 },
+      "IST": { name: "Istanbul", lat: 41.2753, lon: 28.7519 },
+      "DXB": { name: "Dubai", lat: 25.2532, lon: 55.3657 }
     };
 
     const bannedTitlePatterns = [
@@ -332,7 +335,10 @@
       /College/i,
       /Ward/i,
       /Township/i,
-      /County Route/i
+      /County Route/i,
+      /by-election/i,
+      /crater on/i,
+      /minor planet/i
     ];
 
     let latestTrip = {
@@ -345,7 +351,7 @@
       return a + (b - a) * t;
     }
 
-    function generateSamplePoints(start, end, samples = 18) {
+    function generateSamplePoints(start, end, samples = 20) {
       const points = [];
       for (let i = 1; i < samples; i++) {
         const t = i / samples;
@@ -369,15 +375,27 @@
 
     function categoryForTitle(title) {
       const checks = [
+        { pattern: /Castle/i, label: "Castle" },
+        { pattern: /Fort/i, label: "Fort" },
+        { pattern: /Palace/i, label: "Palace" },
+        { pattern: /Abbey/i, label: "Abbey" },
+        { pattern: /Cathedral/i, label: "Cathedral" },
+        { pattern: /Monastery/i, label: "Monastery" },
+        { pattern: /Temple/i, label: "Temple" },
+        { pattern: /Bridge/i, label: "Bridge" },
+        { pattern: /Tower/i, label: "Tower" },
+        { pattern: /Museum/i, label: "Museum" },
+        { pattern: /National Park/i, label: "National park" },
+        { pattern: /Archaeological/i, label: "Archaeology" },
+        { pattern: /Ruins/i, label: "Ruins" },
+        { pattern: /Historic/i, label: "Historic site" },
         { pattern: /Sea$/i, label: "Sea" },
         { pattern: /Ocean$/i, label: "Ocean" },
         { pattern: /River$/i, label: "River" },
         { pattern: /Lake$/i, label: "Lake" },
         { pattern: /Mountains$/i, label: "Mountain range" },
         { pattern: /Mountain$/i, label: "Mountain" },
-        { pattern: /Alps$/i, label: "Mountain range" },
         { pattern: /Forest$/i, label: "Forest" },
-        { pattern: /Desert$/i, label: "Desert" },
         { pattern: /Island$/i, label: "Island" },
         { pattern: /Islands$/i, label: "Islands" },
         { pattern: /Channel$/i, label: "Channel" },
@@ -396,32 +414,46 @@
       let score = 0;
 
       const strongBonuses = [
+        /Castle/i,
+        /Fort/i,
+        /Palace/i,
+        /Abbey/i,
+        /Cathedral/i,
+        /Monastery/i,
+        /Temple/i,
+        /Bridge/i,
+        /Tower/i,
+        /Museum/i,
+        /National Park/i,
+        /Archaeological/i,
+        /Ruins/i,
+        /Historic/i,
+        /Monument/i,
         /Sea$/i,
-        /Ocean$/i,
-        /Mountains$/i,
         /River$/i,
         /Lake$/i,
-        /Island$/i,
-        /Islands$/i,
+        /Mountains$/i,
         /Forest$/i,
-        /Desert$/i,
+        /Island$/i,
         /Channel$/i,
         /Bay$/i,
-        /Gulf$/i,
-        /Alps$/i
+        /Gulf$/i
       ];
 
       const mediumBonuses = [
-        /Mount/i,
-        /National Park/i,
-        /Archipelago/i,
-        /Peninsula/i,
         /Valley/i,
-        /Plateau/i
+        /Plateau/i,
+        /Peninsula/i,
+        /Cave/i,
+        /Observatory/i,
+        /Prison/i,
+        /Shipwreck/i,
+        /Aqueduct/i,
+        /Basilica/i
       ];
 
       strongBonuses.forEach(pattern => {
-        if (pattern.test(title)) score += 5;
+        if (pattern.test(title)) score += 6;
       });
 
       mediumBonuses.forEach(pattern => {
@@ -439,28 +471,41 @@
       return text.slice(0, maxLength).replace(/\s+\S*$/, "") + "…";
     }
 
+    function escapeHtml(text) {
+      if (!text) return "";
+      return text
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+    }
+
     async function fetchGeoSearch(lat, lon) {
-      const url = `https://en.wikipedia.org/w/api.php?action=query&list=geosearch&gscoord=${lat}|${lon}&gsradius=15000&gslimit=18&format=json&origin=*`;
+      const url = `https://en.wikipedia.org/w/api.php?action=query&list=geosearch&gscoord=${lat}|${lon}&gsradius=50000&gslimit=25&format=json&origin=*`;
       const response = await fetch(url);
       if (!response.ok) throw new Error("Failed to fetch nearby articles");
       const data = await response.json();
       return data?.query?.geosearch || [];
     }
 
-    async function fetchSummary(title) {
-      const url = `https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(title)}`;
+    async function fetchPageDetails(title) {
+      const url = `https://en.wikipedia.org/w/api.php?action=query&prop=extracts|pageimages|description|info&exintro=1&explaintext=1&inprop=url&piprop=thumbnail&pithumbsize=800&titles=${encodeURIComponent(title)}&format=json&origin=*`;
       const response = await fetch(url);
       if (!response.ok) return null;
       const data = await response.json();
-      if (!data.extract) return null;
+      const pages = data?.query?.pages || {};
+      const page = Object.values(pages)[0];
+
+      if (!page || page.missing || !page.extract) return null;
 
       return {
-        title: data.title,
-        shortSummary: shortenText(data.extract, 260),
-        longSummary: data.extract,
-        url: data.content_urls?.desktop?.page || `https://en.wikipedia.org/wiki/${encodeURIComponent(title)}`,
-        image: data.thumbnail?.source || "",
-        description: data.description || ""
+        title: page.title,
+        shortSummary: shortenText(page.extract, 280),
+        longSummary: page.extract,
+        url: page.fullurl || `https://en.wikipedia.org/wiki/${encodeURIComponent(page.title)}`,
+        image: page.thumbnail?.source || "",
+        description: page.description || ""
       };
     }
 
@@ -533,16 +578,6 @@
       }
     }
 
-    function escapeHtml(text) {
-      if (!text) return "";
-      return text
-        .replace(/&/g, "&amp;")
-        .replace(/</g, "&lt;")
-        .replace(/>/g, "&gt;")
-        .replace(/"/g, "&quot;")
-        .replace(/'/g, "&#039;");
-    }
-
     async function generateRoute() {
       const originCode = document.getElementById("origin").value.trim().toUpperCase();
       const destinationCode = document.getElementById("destination").value.trim().toUpperCase();
@@ -580,30 +615,41 @@
       loading.textContent = "Looking up places below the route...";
 
       try {
-        const samplePoints = generateSamplePoints(origin, destination, 18);
+        const samplePoints = generateSamplePoints(origin, destination, 20);
         const candidates = [];
 
         for (const point of samplePoints) {
-          const nearby = await fetchGeoSearch(point.lat, point.lon);
+          let nearby = [];
+          try {
+            nearby = await fetchGeoSearch(point.lat, point.lon);
+          } catch (e) {
+            continue;
+          }
 
           const filtered = nearby
             .filter(item => passesTitleFilter(item.title))
-            .sort((a, b) => {
-              const scoreA = scoreTitle(a.title) - (a.dist / 5500);
-              const scoreB = scoreTitle(b.title) - (b.dist / 5500);
-              return scoreB - scoreA;
-            });
+            .map(item => ({
+              ...item,
+              score: scoreTitle(item.title) - (item.dist / 15000)
+            }))
+            .sort((a, b) => b.score - a.score);
 
-          const topFew = filtered.slice(0, 3);
+          const topFew = filtered.slice(0, 4);
 
           topFew.forEach(item => {
             candidates.push({
               title: item.title,
               distance: item.dist,
               progress: point.progress,
-              category: categoryForTitle(item.title)
+              category: categoryForTitle(item.title),
+              rawScore: item.score
             });
           });
+        }
+
+        if (candidates.length === 0) {
+          error.textContent = "I couldn't find anything useful for that route.";
+          return;
         }
 
         const deduped = [];
@@ -617,37 +663,46 @@
           }
         }
 
-        deduped.sort((a, b) => a.progress - b.progress);
+        deduped.sort((a, b) => {
+          if (Math.abs(a.progress - b.progress) < 0.02) {
+            return b.rawScore - a.rawScore;
+          }
+          return a.progress - b.progress;
+        });
 
-        const moreVaried = [];
+        const varied = [];
         const recentCategories = [];
 
         for (const item of deduped) {
-          const repeatedCategory = recentCategories.slice(-2).every(cat => cat === item.category);
-          if (repeatedCategory && moreVaried.length > 0) continue;
+          const sameAsRecent = recentCategories.slice(-2).includes(item.category) && item.category !== "Place";
+          if (sameAsRecent && varied.length >= 5) {
+            continue;
+          }
 
-          moreVaried.push(item);
+          varied.push(item);
           recentCategories.push(item.category);
 
-          if (moreVaried.length >= 12) break;
+          if (varied.length >= 14) break;
         }
 
         const summaries = [];
 
-        for (const item of moreVaried) {
-          const summary = await fetchSummary(item.title);
-          if (!summary) continue;
+        for (const item of varied) {
+          const detail = await fetchPageDetails(item.title);
+          if (!detail) continue;
 
           summaries.push({
-            ...summary,
+            ...detail,
             progress: item.progress,
             distance: item.distance,
             category: item.category
           });
+
+          if (summaries.length >= 12) break;
         }
 
         if (summaries.length === 0) {
-          error.textContent = "I couldn't find good Wikipedia articles for that route. Try one of the suggested airport pairs.";
+          error.textContent = "I couldn't find good Wikipedia articles for that route.";
           return;
         }
 
@@ -677,7 +732,7 @@
         .replace(/[^a-zA-Z0-9\-]/g, "")
         .toLowerCase();
 
-      const articleHtml = latestTrip.articles.map((article, index) => `
+      const articleHtml = latestTrip.articles.map(article => `
         <div class="article-box">
           <div class="article-header">
             <div class="article-time">${formatProgress(article.progress)}</div>
